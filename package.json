@@ -1,0 +1,14 @@
+{
+  "name": "dsh-wsl-bridge",
+  "version": "0.1.0",
+  "description": "Windows access tools for WSL agents: win_ls/win_read/win_write/win_run/win_open/win_path/win_drives.",
+  "type": "module",
+  "main": "index.js",
+  "files": ["index.js", "cordis.patch.yml", "README.md", "LICENSE"],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT"
+}

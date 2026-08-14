@@ -1,0 +1,5 @@
+# wsl-bridge bundle patch: registers the Windows-access tools.
+# Installed via `dsh plugin --profile <name> add .` from this directory.
+- insert:
+    - id: wsl-bridge
+      name: dsh-wsl-bridge
