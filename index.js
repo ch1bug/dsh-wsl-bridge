@@ -11,6 +11,14 @@ export const name = 'dsh-wsl-bridge'
 export const inject = ['tools', 'shell', 'sandboxPolicy']
 
 export function apply(ctx) {
+  // UTF-8-safe base64: Node's b64() rejects non-Latin-1 (Chinese file content
+  // would throw "Invalid character"). Encode via TextEncoder + bytes first.
+  function b64(s) {
+    const bytes = new TextEncoder().encode(String(s))
+    let bin = ''
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i])
+    return btoa(bin)
+  }
   function shq(s) {
     return "'" + String(s).replace(/'/g, "'\\''") + "'"
   }
@@ -112,11 +120,11 @@ export function apply(ctx) {
       output: { schema: { type: 'json' }, render: renderJson },
       async execute(args, exec) {
         const p = toWslPath(args.path)
-        const b64 = btoa(String(args.content ?? ''))
+        const enc = b64(String(args.content ?? ''))
         const slash = p.lastIndexOf('/')
         const dir = slash > 0 ? p.slice(0, slash) : '/'
         const op = args.append === true ? '>>' : '>'
-        const cmd = `mkdir -p ${shq(dir)} && printf '%s' ${b64} | base64 -d ${op} ${shq(p)}`
+        const cmd = `mkdir -p ${shq(dir)} && printf '%s' ${enc} | base64 -d ${op} ${shq(p)}`
         const r = await run(cmd, exec, { timeoutMs: 20000 })
         return {
           path: p, winPath: toWinPath(p), exitCode: r.exitCode,
@@ -143,8 +151,8 @@ export function apply(ctx) {
         if (args.shell === 'powershell') {
           const ps1 = `/mnt/c/Windows/Temp/dsh_${rand}.ps1`
           const script = '[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; ' + command
-          const b64 = btoa('\ufeff' + script)
-          await run(`printf '%s' ${b64} | base64 -d > ${shq(ps1)}`, exec, { timeoutMs: 10000 })
+          const enc = b64('\ufeff' + script)
+          await run(`printf '%s' ${enc} | base64 -d > ${shq(ps1)}`, exec, { timeoutMs: 10000 })
           const r = await run(`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ${shq(toWinPath(ps1))}`, exec, { timeoutMs, workdir })
           await run(`rm -f ${shq(ps1)}`, exec, { timeoutMs: 5000 }).catch(() => {})
           return { shell: 'powershell', exitCode: r.exitCode, timedOut: r.timedOut, aborted: r.aborted, stdout: r.stdout.text, stderr: r.stderr.text }
@@ -154,8 +162,8 @@ export function apply(ctx) {
           return { shell: 'direct', exitCode: r.exitCode, timedOut: r.timedOut, aborted: r.aborted, stdout: r.stdout.text, stderr: r.stderr.text }
         }
         const bat = `/mnt/c/Windows/Temp/dsh_${rand}.bat`
-        const b64 = btoa('@echo off\r\nchcp 65001 >nul\r\n' + command + '\r\n')
-        await run(`printf '%s' ${b64} | base64 -d > ${shq(bat)}`, exec, { timeoutMs: 10000 })
+        const enc = b64('@echo off\r\nchcp 65001 >nul\r\n' + command + '\r\n')
+        await run(`printf '%s' ${enc} | base64 -d > ${shq(bat)}`, exec, { timeoutMs: 10000 })
         const r = await run(`cmd.exe /c ${shq(toWinPath(bat))}`, exec, { timeoutMs, workdir })
         await run(`rm -f ${shq(bat)}`, exec, { timeoutMs: 5000 }).catch(() => {})
         return { shell: 'cmd', exitCode: r.exitCode, timedOut: r.timedOut, aborted: r.aborted, stdout: r.stdout.text, stderr: r.stderr.text }
