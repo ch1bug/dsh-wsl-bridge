@@ -31,16 +31,22 @@ Path normalization handles both `C:\Users\me` and `/mnt/c/Users/me` forms.
 `win_run` writes temp `.bat`/`.ps1` files to `C:\Windows\Temp` and cleans up
 after itself; PowerShell output is forced to UTF-8 console encoding.
 
-## Install (DSH)
+## Install (DSH bundle)
 
-This is a Cordis Host plugin. In a DSH session:
+Standard DSH bundle — install with the official plugin command (auto-inits
+the profile, pnpm-installs, and appends the bundle layer per
+`dsh.bundle.patch`):
 
-1. Define the plugin with the Cordis toolset (or mount it in an agent preset
-   composition), passing `src/index.js` as the host half.
-2. The plugin reads optional env vars at apply time:
-   - `CODEBASE_MEMORY_BIN` — path to the `codebase-memory-mcp` binary
-     (default `/usr/local/bin/codebase-memory-mcp`); the codebase tools simply
-     error if the binary is absent.
+```bash
+dsh plugin --profile web add /path/to/dsh-wsl-bridge
+# or: dsh plugin --profile web add github:you/dsh-wsl-bridge
+# Restart dsh web; the tools mount automatically.
+```
+
+Dependencies are declared as `peerDependencies` (ecosystem convention —
+`@deepseek-ai/dsh-tools` is already loaded in the DSH process). Optional env
+vars at apply time: `CODEBASE_MEMORY_BIN` for the codebase-memory tools
+(default `/usr/local/bin/codebase-memory-mcp`; they error if absent).
 
 ## Requirements
 
