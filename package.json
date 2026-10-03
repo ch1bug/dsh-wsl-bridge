@@ -1,6 +1,6 @@
 {
   "name": "dsh-wsl-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.2-r1",
   "description": "Windows access tools for WSL agents: win_ls/win_read/win_write/win_run/win_open/win_path/win_drives.",
   "type": "module",
   "main": "index.js",
