@@ -46,7 +46,11 @@ export function apply(ctx) {
       ...(policy !== undefined ? { sandboxPolicy: policy } : {}),
       ...(exec !== undefined && exec.signal !== undefined ? { signal: exec.signal } : {})
     }
-    return shell.run(shell.resolve(request))
+    // Seam posture (alpha.1 audit, dsh-shell-host #17): ShellExecutor exposes
+    // resolve() + execute() only — there is no run(). Foreground = await the
+    // handle's result() projection (same pattern as the official bash tool).
+    const handle = await shell.execute(shell.resolve(request))
+    return handle.result()
   }
 
   const renderJson = (_args, value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }]
